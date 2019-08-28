@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ "$EUID" -ne 0 ]
+then
+	echo "Please run as root"
+	exit
+fi
+
+./ns_setup
+
+for i in `seq 0 5`
+do
+	sleep 1
+	./invoke_rpld $i &
+done

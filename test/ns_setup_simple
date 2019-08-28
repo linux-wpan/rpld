@@ -1,0 +1,20 @@
+#!/bin/bash
+
+modprobe mac802154_hwsim
+ip netns add foo
+ip netns add bar
+
+iwpan phy phy0 set netns name foo
+iwpan phy phy1 set netns name bar
+
+ip netns exec foo iwpan dev wpan0 set pan_id 0xbeef
+ip netns exec bar iwpan dev wpan1 set pan_id 0xbeef
+
+ip netns exec foo ip link add link wpan0 name lowpan0 type lowpan
+ip netns exec bar ip link add link wpan1 name lowpan1 type lowpan
+
+ip netns exec foo ip link set wpan0 up
+ip netns exec bar ip link set wpan1 up
+
+ip netns exec foo ip link set lowpan0 up
+ip netns exec bar ip link set lowpan1 up

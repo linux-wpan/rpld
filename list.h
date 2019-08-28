@@ -1,0 +1,42 @@
+/*
+ *   Authors:
+ *    Alexander Aring		<alex.aring@gmail.com>
+ *
+ *   This software is Copyright 2019 by the above mentioned author(s),
+ *   All Rights Reserved.
+ *
+ *   The license which is distributed with this software in the file COPYRIGHT
+ *   applies to this software. If your distribution is missing this file, you
+ *   may request it from <alex.aring@gmail.com>.
+ */
+
+#ifndef __RPLD_LIST_H__
+#define __RPLD_LIST_H__
+
+#include "helpers.h"
+#include "utlist.h"
+
+/* TODO I really want to improve this wrapper API to send it upstream in utlist
+ * as an "option" to use. I need to add more static inline wrapper here.
+ */
+
+/* utlist is great but the API is shit, so make it like linux
+ * specially I HATE the head handling, which is a assing which
+ * introduce a lot of weird behaviours when you don't pass head
+ * as ** as function who deals with it when the list is empty
+ * as NULL, weird is when not NULL you don't have issues.
+ *
+ * Sorry, but I said, it's a great implementation. :-)
+ * This makes it like linux API which doesn't have this issue
+ * because pointers are packed and using of container_of()
+ */
+struct list_head {
+	struct list *head;
+};
+
+struct list {
+	struct list *prev;
+	struct list *next;
+};
+
+#endif /* __RPLD_LIST_H__ */

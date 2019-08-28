@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if [ "$EUID" -ne 0 ]
+then
+	echo "Please run as root"
+	exit
+fi
+
+killall rpld
+
+rmmod mac802154_hwsim
+rmmod mac802154
+rmmod ieee802154_6lowpan
+rmmod ieee802154
+
+for i in `seq 0 4`
+do
+	ip netns del ns$i
+done
