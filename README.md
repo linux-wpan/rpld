@@ -16,7 +16,9 @@ I have 1001 ideas to make the handling better, but this comes all afterwards.
 Build:
 
 $ mkdir build
+
 $ meson build
+
 $ ninja -C build
 
 Testing:
