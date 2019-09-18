@@ -1,0 +1,38 @@
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+    - secure: "H2LC/vR1TNyECl8K1MJnvBay7je0NO4hzVdxk1TanJM4Cjo66Bdf+iMsIWW9KifTWlF+I8ATC8yrweGm02b9FqKSl7gBEPpgOev3q/IXlcU5HHqP+TDrGnn4aLFVYDiTjNYI39TpouUEQBN5cbDljN0GlYFyrXQkP28rvnhGyvvF65t0yQWRXrE1vlAeXq/1/IK/DwMams5YmGAVanH9TtOfePomAGtFtpiryHSgrZugyC03W6eiIzmJ2jzIJ6Wkykv1ASy1v2MEC5xl0YYOpZM1EF8hfScqKbA5Vn1JwM6yrGmDbjwFZCEYBj8N8EPAaZFXj6VNtJoaRB9jnO9Im1GqnD6TuYVc4caXYSrgxT7nMZhFe/Jt9y2mVsy5/nngJjZ5me3hLJlWuRgWDfo9hi02U6K8GkoHNumejGzOikErqGPVp4+aEFy3qr1sElWXgVYQP0/nKHGtciLnE3g2Tbt3mNEAakv+38Rh2zu2icn6vAXD5o4tlr7B86YUaSZlWVNr3LmW/GCZazdcR+I8zAwwo7Tj66pDvdejAe4s8yotOJw1/TMnBvJTO2w+ngggSoo/Ftp6AfdvNWqNBLV8h62uHjL5rXQh/Nx2lE3pA4PyN4mJegFPvqUSAdQurk+JZbfeP9HJ1R3CvP34LNsqoRWziKvv895xxjD3vjlJ7s8="
+
+notifications:
+  irc: "chat.freenode.net#linux-wpan"
+
+language: c
+
+dist: bionic
+sudo: true
+
+compiler:
+  - clang
+  - gcc
+
+addons:
+  apt:
+    packages:
+    - libev-dev
+    - liblua5.3-dev
+    - libmnl-dev
+    - meson
+    - ninja-build
+  coverity_scan:
+    project:
+      name: "linux-wpan/rpld"
+      description: "Build submitted via Travis CI"
+    notification_email: stefan@datenfreihafen.org
+    build_command_prepend:   "rm -rf build && mkdir build && meson build"
+    build_command:   "ninja -C build"
+    branch_pattern: coverity_scan
+
+script:
+  - rm -rf build && mkdir build && meson build .
+  - ninja -C build
