@@ -167,6 +167,7 @@ static struct iface *iface_create()
 static void iface_free(struct iface *iface)
 {
 	free(iface->ifaddrs);
+	free(iface->llinfo.addr);
 	free(iface);
 }
 
@@ -299,12 +300,17 @@ int config_load(const char *filename, struct list_head *ifaces)
 	lua_pushnil(L);
 	while (lua_next(L, -2) != 0) {
 		iface = iface_create();
-		if (!iface)
+		if (!iface) {
+			lua_close(L);
 			return -1;
+		}
 
 		lua_getfield(L, -1, "ifname");
-		if (!lua_isstring(L, -1))
+		if (!lua_isstring(L, -1)) {
+			iface_free(iface);
+			lua_close(L);
 			return -1;
+		}
 
 		strncpy(iface->ifname, lua_tostring(L, -1), IFNAMSIZ);
 		lua_pop(L, 1);
@@ -320,28 +326,38 @@ int config_load(const char *filename, struct list_head *ifaces)
 #endif
 		if (rc == -1) {
 			flog(LOG_ERR, "Failed to set forwarding");
+			iface_free(iface);
+			lua_close(L);
 			return -1;
 		}
 
 		iface->ifindex = if_nametoindex(iface->ifname);
 		if (iface->ifindex == 0) {
 			flog(LOG_ERR, "%s not found: %s", iface->ifname, strerror(errno));
+			iface_free(iface);
+			lua_close(L);
 			return -1;
 		}
 
 		nl_get_llinfo(iface->ifindex, &iface->llinfo);
 
 		rc = get_iface_addrs(iface->ifname, &iface->ifaddr, &iface->ifaddrs);
-		if (rc == -1)
+		if (rc == -1) {
+			iface_free(iface);
+			lua_close(L);
 			return rc;
+		}
 
 		/* TODO because compression might be different here... */
 		iface->ifaddr_src = &iface->ifaddr;
 		iface->ifaddrs_count = rc;
 
 		lua_getfield(L, -1, "dodag_root");
-		if (!lua_isboolean(L, -1))
+		if (!lua_isboolean(L, -1)) {
+			iface_free(iface);
+			lua_close(L);
 			return -1;
+		}
 
 		iface->dodag_root = lua_toboolean(L, -1);
 		lua_pop(L, 1);
