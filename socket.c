@@ -92,30 +92,35 @@ int open_icmpv6_socket(const struct list_head *ifaces)
 	err = setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, (int[]){1}, sizeof(int));
 	if (err < 0) {
 		flog(LOG_ERR, "setsockopt(IPV6_RECVPKTINFO): %s", strerror(errno));
+		close(sock);
 		return -1;
 	}
 
 	err = setsockopt(sock, IPPROTO_RAW, IPV6_CHECKSUM, (int[]){2}, sizeof(int));
 	if (err < 0) {
 		flog(LOG_ERR, "setsockopt(IPV6_CHECKSUM): %s", strerror(errno));
+		close(sock);
 		return -1;
 	}
 
 	err = setsockopt(sock, IPPROTO_IPV6, IPV6_UNICAST_HOPS, (int[]){255}, sizeof(int));
 	if (err < 0) {
 		flog(LOG_ERR, "setsockopt(IPV6_UNICAST_HOPS): %s", strerror(errno));
+		close(sock);
 		return -1;
 	}
 
 	err = setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, (int[]){1}, sizeof(int));
 	if (err < 0) {
 		flog(LOG_ERR, "setsockopt(IPV6_MULTICAST_HOPS): %s", strerror(errno));
+		close(sock);
 		return -1;
 	}
 
 	err = setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (int[]){0}, sizeof(int));
 	if (err < 0) {
 		flog(LOG_ERR, "setsockopt(IPV6_MULTICAST_LOOP): %s", strerror(errno));
+		close(sock);
 		return -1;
 	}
 
@@ -123,6 +128,7 @@ int open_icmpv6_socket(const struct list_head *ifaces)
 	err = setsockopt(sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, (int[]){1}, sizeof(int));
 	if (err < 0) {
 		flog(LOG_ERR, "setsockopt(IPV6_RECVHOPLIMIT): %s", strerror(errno));
+		close(sock);
 		return -1;
 	}
 #endif
@@ -130,6 +136,7 @@ int open_icmpv6_socket(const struct list_head *ifaces)
 	err = subscribe_rpl_multicast(sock, ifaces);
 	if (err < 0) {
 		flog(LOG_ERR, "Failed to subscribe rpl multicast: %s", strerror(errno));
+		close(sock);
 		return -1;
 	}
 
