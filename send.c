@@ -53,11 +53,9 @@ static int really_send(int sock, const struct iface *iface,
 	pkt_info->ipi6_ifindex = iface->ifindex;
 	memcpy(&pkt_info->ipi6_addr, iface->ifaddr_src, sizeof(struct in6_addr));
 
-#if 1
-//#ifdef HAVE_SIN6_SCOPE_ID
+#ifdef HAVE_SIN6_SCOPE_ID
 	if (IN6_IS_ADDR_LINKLOCAL(&addr.sin6_addr) || IN6_IS_ADDR_MC_LINKLOCAL(&addr.sin6_addr))
 		addr.sin6_scope_id = iface->ifindex;
-//#endif
 #endif
 
 	struct msghdr mhdr;
