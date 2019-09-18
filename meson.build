@@ -10,7 +10,16 @@ else
 	error('Couldn\'t find libev header / library')
 endif
 
-luadep = dependency('lua5.3')
+foreach name : ['lua', 'lua5.3', 'lua-5.3', 'lua53']
+	dep = dependency(name, version: '>=5.3', required: false)
+	if dep.found()
+		luadep = dep
+	endif
+endforeach
+if not luadep.found()
+	error('Couldn\'t find Lua.')
+endif
+
 mnldep = dependency('libmnl')
 
 srcs = files(
