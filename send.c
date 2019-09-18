@@ -29,9 +29,10 @@
 
 static int really_send(int sock, const struct iface *iface,
 		       const struct in6_addr *dest,
-		       const struct safe_buffer *sb)
+		       struct safe_buffer *sb)
 {
 	struct sockaddr_in6 addr;
+	int rc;
 	memset((void *)&addr, 0, sizeof(addr));
 	addr.sin6_family = AF_INET6;
 	addr.sin6_port = htons(IPPROTO_ICMPV6);
@@ -67,7 +68,10 @@ static int really_send(int sock, const struct iface *iface,
 	mhdr.msg_control = (void *)cmsg;
 	mhdr.msg_controllen = sizeof(chdr);
 
-	return sendmsg(sock, &mhdr, 0);
+	rc = sendmsg(sock, &mhdr, 0);
+	safe_buffer_free(sb);
+
+	return rc;
 }
 void send_dio(int sock, struct dag *dag)
 {
