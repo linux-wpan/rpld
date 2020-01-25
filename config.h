@@ -53,7 +53,7 @@ struct iface {
 int config_load(const char *filename, struct list_head *ifaces);
 void config_free(struct list_head *ifaces);
 
-struct iface *iface_find_by_ifindex(const struct list_head *ifaces,
+struct iface *iface_find_by_ifindex(struct list_head *ifaces,
 				    uint32_t ifindex);
 
 #endif /* __RPLD_CONFIG__ */

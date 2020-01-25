@@ -71,10 +71,8 @@ static struct child *dag_lookup_child(const struct dag *dag,
 				      const struct in6_addr *addr)
 {
 	struct child *peer;
-	struct list *p;
 
-	DL_FOREACH(dag->childs.head, p) {
-		peer = container_of(p, struct child, list);
+	list_for_each_entry(peer, &dag->childs, list) {
 		if (dag_is_child(peer, addr))
 			return peer;
 	}
@@ -103,10 +101,8 @@ static struct rpl *dag_lookup_rpl(const struct iface *iface,
 				  uint8_t instance_id)
 {
 	struct rpl *rpl;
-	struct list *r;
 
-	DL_FOREACH(iface->rpls.head, r) {
-		rpl = container_of(r, struct rpl, list);
+	list_for_each_entry(rpl, &iface->rpls, list) {
 		if (rpl->instance_id == instance_id)
 			return rpl;
 	}
@@ -118,11 +114,8 @@ static struct dag *dag_lookup_dodag(const struct rpl *rpl,
 				    const struct in6_addr *dodagid)
 {
 	struct dag *dag;
-	struct list *d;
 
-	DL_FOREACH(rpl->dags.head, d) {
-		dag = container_of(d, struct dag, list);
-
+	list_for_each_entry(dag, &rpl->dags, list) {
 		if (!memcmp(&dag->dodagid, dodagid, sizeof(dag->dodagid)))
 			return dag;
 	}
@@ -157,11 +150,8 @@ static struct rpl *dag_rpl_create(uint8_t instance_id)
 struct dag_daoack *dag_lookup_daoack(const struct dag *dag, uint8_t dsn)
 {
 	struct dag_daoack *daoack;
-	struct list *d;
 
-	DL_FOREACH(dag->pending_acks.head, d) {
-		daoack = container_of(d, struct dag_daoack, list);
-
+	list_for_each_entry(daoack, &dag->pending_acks, list) {
 		if (daoack->dsn == dsn)
 			return daoack;
 	}
@@ -377,7 +367,6 @@ void dag_build_dao(struct dag *dag, struct safe_buffer *sb)
 	struct nd_rpl_daoack daoack = {};
 	struct in6_prefix prefix;
 	const struct child *child;
-	const struct list *c;
 
 	dag_build_icmp(sb, ND_RPL_DAO);
 
@@ -390,8 +379,7 @@ void dag_build_dao(struct dag *dag, struct safe_buffer *sb)
 	prefix.len = 128;
 	append_target(&prefix, sb);
 
-	DL_FOREACH(dag->childs.head, c) {
-		child = container_of(c, struct child, list);
+	list_for_each_entry(child, &dag->childs, list) {
 		prefix.prefix = child->addr;
 		prefix.len = 128;
 

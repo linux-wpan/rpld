@@ -21,7 +21,7 @@
 
 #include "config.h"
 
-void process(int sock, const struct list_head *ifaces, unsigned char *msg,
+void process(int sock, struct list_head *ifaces, unsigned char *msg,
 	     int len, struct sockaddr_in6 *addr, struct in6_pktinfo *pkt_info,
 	     int hoplimit);
 

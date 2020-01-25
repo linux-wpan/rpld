@@ -137,15 +137,11 @@ struct dag *iface_find_dag(const struct list_head *dags, uint16_t inst_id)
 }
 #endif
 
-struct iface *iface_find_by_ifindex(const struct list_head *ifaces,
-				    uint32_t ifindex)
+struct iface *iface_find_by_ifindex(struct list_head *ifaces, uint32_t ifindex)
 {
 	struct iface *iface;
-	struct list *e;
 
-	DL_FOREACH(ifaces->head, e) {
-		iface = container_of(e, struct iface, list);
-
+	list_for_each_entry(iface, ifaces, list) {
 		if (iface->ifindex == ifindex)
 			return iface;
 	}
@@ -382,13 +378,10 @@ int config_load(const char *filename, struct list_head *ifaces)
 
 void config_free(struct list_head *ifaces)
 {
-	struct list *e, *tmp;
-	struct iface *iface;
+	struct iface *iface, *tmp;
 
-	DL_FOREACH_SAFE(ifaces->head, e, tmp) {
-		iface = container_of(e, struct iface, list);
+	list_for_each_entry_safe(iface, tmp, ifaces, list) {
 		iface_free(iface);
-
-		DL_DELETE(ifaces->head, e);
+		list_del(ifaces, &iface->list);
 	}
 }

@@ -41,12 +41,9 @@ static int rpl_multicast_handler(int sock, const struct list_head *ifaces,
 {
 	struct ipv6_mreq mreq;
 	struct iface *iface;
-	struct list *e;
 	int rc;
 
-	DL_FOREACH(ifaces->head, e) {
-		iface = container_of(e, struct iface, list);
-
+	list_for_each_entry(iface, ifaces, list) {
 		memset(&mreq, 0, sizeof(mreq));
 
 		mreq.ipv6mr_interface = iface->ifindex;

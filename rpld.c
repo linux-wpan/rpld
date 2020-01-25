@@ -103,23 +103,17 @@ void dag_init_timer(struct dag *dag)
 
 static int rpld_setup(struct ev_loop *loop, struct list_head *ifaces)
 {
-	struct list *i, *r, *d;
 	struct iface *iface;
 	struct rpl *rpl;
 	struct dag *dag;
 
-	DL_FOREACH(ifaces->head, i) {
-		iface = container_of(i, struct iface, list);
-
+	list_for_each_entry(iface, ifaces, list) {
 		ev_timer_init(&iface->dis_w, send_dis_cb, 1, 1);
 		/* schedule a dis at statup */
 		ev_timer_start(loop, &iface->dis_w);
 
-		DL_FOREACH(iface->rpls.head, r) {
-			rpl = container_of(r, struct rpl, list);
-			DL_FOREACH(rpl->dags.head, d) {
-				dag = container_of(d, struct dag, list);
-
+		list_for_each_entry(rpl, &iface->rpls, list) {
+			list_for_each_entry(dag, &rpl->dags, list) {
 				ev_timer_init(&dag->trickle_w, trickle_cb,
 					      dag->trickle_t, dag->trickle_t);
 				ev_timer_start(loop, &dag->trickle_w);

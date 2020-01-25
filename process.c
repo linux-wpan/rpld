@@ -114,7 +114,6 @@ static void process_dao(int sock, struct iface *iface, const void *msg,
 	const unsigned char *p;
 	struct child *child;
 	struct dag *dag;
-	struct list *c;
 	int optlen;
 	int rc;
 
@@ -173,9 +172,7 @@ static void process_dao(int sock, struct iface *iface, const void *msg,
 		flog(LOG_INFO, "dao optlen %d", optlen);
 	}
 
-	DL_FOREACH(dag->childs.head, c) {
-		child = container_of(c, struct child, list);
-
+	list_for_each_entry(child, &dag->childs, list) {
 		rc = nl_add_route_via(dag->iface->ifindex, &child->addr,
 				      &child->from);
 		flog(LOG_INFO, "via route %d %s", rc, strerror(errno));
@@ -220,24 +217,19 @@ static void process_dis(int sock, struct iface *iface, const void *msg,
 			size_t len, struct sockaddr_in6 *addr)
 {
 	char addr_str[INET6_ADDRSTRLEN];
-	struct list *r, *d;
 	struct rpl *rpl;
 	struct dag *dag;
 
 	addrtostr(&addr->sin6_addr, addr_str, sizeof(addr_str));
 	flog(LOG_INFO, "received dis %s", addr_str);
 
-	DL_FOREACH(iface->rpls.head, r) {
-		rpl = container_of(r, struct rpl, list);
-		DL_FOREACH(rpl->dags.head, d) {
-			dag = container_of(d, struct dag, list);
-
+	list_for_each_entry(rpl, &iface->rpls, list) {
+		list_for_each_entry(dag, &rpl->dags, list)
 			send_dio(sock, dag);
-		}
 	}
 }
 
-void process(int sock, const struct list_head *ifaces, unsigned char *msg,
+void process(int sock, struct list_head *ifaces, unsigned char *msg,
 	     int len, struct sockaddr_in6 *addr, struct in6_pktinfo *pkt_info,
 	     int hoplimit)
 {
