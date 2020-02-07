@@ -176,7 +176,7 @@ void dag_init_timer(struct dag *dag);
 static int dag_init(struct dag *dag, const struct iface *iface,
 		    const struct rpl *rpl, const struct in6_addr *dodagid,
 		    ev_tstamp trickle_t, uint16_t my_rank, uint8_t version,
-		    const struct in6_prefix *dest)
+		    uint8_t mop, const struct in6_prefix *dest)
 {
 	/* TODO dest is currently necessary */
 	if (!dag || !iface || !rpl || !dest)
@@ -192,6 +192,7 @@ static int dag_init(struct dag *dag, const struct iface *iface,
 	dag->version = version;
 	dag->my_rank = my_rank;
 	dag->trickle_t = DEFAULT_TICKLE_T;
+	dag->mop = mop;
 
 	dag_init_timer(dag);
 
@@ -200,7 +201,7 @@ static int dag_init(struct dag *dag, const struct iface *iface,
 
 struct dag *dag_create(struct iface *iface, uint8_t instanceid,
 		       const struct in6_addr *dodagid, ev_tstamp trickle_t,
-		       uint16_t my_rank, uint8_t version,
+		       uint16_t my_rank, uint8_t version, uint8_t mop,
 		       const struct in6_prefix *dest)
 {
 	bool append_rpl = false;
@@ -235,7 +236,7 @@ struct dag *dag_create(struct iface *iface, uint8_t instanceid,
 	}
 
 	rc = dag_init(dag, iface, rpl, dodagid, trickle_t,
-		      my_rank, version, dest);
+		      my_rank, version, mop, dest);
 	if (rc != 0) {
 		free(dag);
 		free(rpl);
@@ -296,7 +297,7 @@ void dag_build_dio(struct dag *dag, struct safe_buffer *sb)
 	dio.rpl_dtsn = dag->dtsn++;
 	flog(LOG_INFO, "my_rank %d", dag->my_rank);
 	dio.rpl_dagrank = htons(dag->my_rank);
-	dio.rpl_mopprf = ND_RPL_DIO_GROUNDED | RPL_DIO_STORING_NO_MULTICAST << 3;
+	dio.rpl_mopprf = ND_RPL_DIO_GROUNDED | (dag->mop << 3);
 	dio.rpl_dagid = dag->dodagid;
 
 	safe_buffer_append(sb, &dio, sizeof(dio));

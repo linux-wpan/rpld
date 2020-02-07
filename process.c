@@ -75,7 +75,8 @@ static void process_dio(int sock, struct iface *iface, const void *msg,
 		flog(LOG_INFO, "received but no dag found %s", addr_str);
 		dag = dag_create(iface, dio->rpl_instanceid,
 				 &dio->rpl_dagid, DEFAULT_TICKLE_T,
-				 UINT16_MAX, dio->rpl_version, &pfx);
+				 UINT16_MAX, dio->rpl_version,
+				 RPL_DIO_MOP(dio->rpl_mopprf), &pfx);
 		if (!dag)
 			return;
 

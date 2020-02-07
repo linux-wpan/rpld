@@ -47,6 +47,7 @@ struct dag {
 	/* if changed */
 	uint8_t dsn;
 	struct in6_addr dodagid;
+	uint8_t mop;
 
 	struct in6_prefix dest;
 
@@ -88,7 +89,7 @@ struct rpl {
 struct dag *dag_create(struct iface *iface, uint8_t instanceid,
 		       const struct in6_addr *dodagid, ev_tstamp trickle_t,
 		       uint16_t my_rank, uint8_t version,
-		       const struct in6_prefix *dest);
+		       uint8_t mop, const struct in6_prefix *dest);
 void dag_free(struct dag *dag);
 void dag_build_dio(struct dag *dag, struct safe_buffer *sb);
 struct dag *dag_lookup(const struct iface *iface, uint8_t instance_id,

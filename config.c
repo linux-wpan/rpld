@@ -21,6 +21,7 @@
 #include "netlink.h"
 #include "config.h"
 #include "log.h"
+#include "rpl.h"
 
 static inline int cmp_iface_addrs(void const *a, void const *b)
 {
@@ -172,8 +173,8 @@ static int config_load_dags(lua_State *L, struct iface *iface,
 {
 	struct in6_addr dodagid;
 	struct in6_prefix dest;
+	uint8_t version, mop;
 	ev_tstamp trickle_t;
-	uint8_t version;
 	struct dag *dag;
 	int rc;
 
@@ -224,10 +225,19 @@ static int config_load_dags(lua_State *L, struct iface *iface,
 		}
 		lua_pop(L, 1);
 
+		/* TODO also check string then to num */
+		lua_getfield(L, -1, "mode_of_operation");
+		if (lua_isnumber(L, -1)) {
+			mop = lua_tonumber(L, -1);
+		} else {
+			mop = RPL_DIO_STORING_NO_MULTICAST;
+		}
+		lua_pop(L, 1);
+
 		lua_pop(L, 1);
 
 		dag = dag_create(iface, instanceid, &dodagid,
-				 trickle_t, 1, version, &dest);
+				 trickle_t, 1, version, mop, &dest);
 		if (!dag)
 			return -1;
 
