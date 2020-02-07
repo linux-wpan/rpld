@@ -12,10 +12,15 @@
 
 #include <time.h>
 
-#include <libmnl/libmnl.h>
+#include <linux/rpl_iptunnel.h>
 #include <linux/rtnetlink.h>
+#include <linux/lwtunnel.h>
+#include <libmnl/libmnl.h>
+#include <linux/rpl.h>
 
 #include "netlink.h"
+/* TODO move this out again */
+#include "tree.h"
 #include "log.h"
 
 static struct mnl_socket *nl;
@@ -149,6 +154,82 @@ int nl_add_addr(uint32_t ifindex, const struct in6_addr *addr)
 	ifm->ifa_scope = RT_SCOPE_UNIVERSE;
 
 	mnl_attr_put(nlh, IFA_ADDRESS, sizeof(*addr), addr);
+
+	if (mnl_socket_sendto(nl, nlh, nlh->nlmsg_len) < 0) {
+		perror("mnl_socket_send");
+		return -1;
+	}
+
+	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
+	if (ret == -1) {
+		perror("mnl_socket_recvfrom");
+		return -1;
+	}
+
+	return mnl_cb_run(buf, ret, seq, portid, NULL, NULL);
+}
+
+int nl_add_source_routes(uint32_t ifindex, const struct list_head *segs)
+{
+	unsigned char buf[MNL_SOCKET_BUFFER_SIZE];
+	struct ipv6_rpl_sr_hdr *srh;
+	int ret, i, nsegs, srhlen;
+	const struct t_path *p;
+	struct nlmsghdr *nlh;
+	struct nlattr *type;
+	struct rtmsg *rtm;
+	unsigned int seq;
+	struct list *c;
+
+	nlh = mnl_nlmsg_put_header(buf);
+	nlh->nlmsg_type	= RTM_NEWROUTE;
+	nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_CREATE | NLM_F_ACK;
+	nlh->nlmsg_seq = seq = time(NULL);
+	rtm = mnl_nlmsg_put_extra_header(nlh, sizeof(*rtm));
+
+	rtm->rtm_family = AF_INET6;
+	rtm->rtm_dst_len = 128;
+	rtm->rtm_src_len = 0;
+	rtm->rtm_tos = 0;
+	rtm->rtm_protocol = RTPROT_STATIC;
+	rtm->rtm_table = RT_TABLE_MAIN;
+	rtm->rtm_type = RTN_UNICAST;
+	/* is there any gateway? */
+	rtm->rtm_scope = RT_SCOPE_UNIVERSE;
+	rtm->rtm_flags = 0;
+
+	mnl_attr_put_u32(nlh, RTA_OIF, ifindex);
+
+	DL_COUNT(segs->head, c, nsegs);
+	nsegs--;
+
+	srhlen = 8 + (16 * nsegs);
+	srh = calloc(1, srhlen);
+
+	srh->hdrlen = (srhlen >> 3) - 1;
+	srh->type = 3;
+	srh->segments_left = nsegs;
+
+	i = 0;
+	list_for_each_entry(p, segs, list) {
+		if (i == 0) {
+			srh->rpl_segaddr[nsegs - i - 1] = p->addr;
+			mnl_attr_put(nlh, RTA_DST, sizeof(p->target), &p->target);
+			i++;
+			continue;
+		}
+		if (i == nsegs)
+			break;
+
+		srh->rpl_segaddr[nsegs - i - 1] = p->addr;
+		i++;
+	}
+
+	mnl_attr_put_u16(nlh, RTA_ENCAP_TYPE, LWTUNNEL_ENCAP_RPL);
+
+	type = mnl_attr_nest_start(nlh, RTA_ENCAP);
+	mnl_attr_put(nlh, RPL_IPTUNNEL_SRH, srhlen, srh);
+	mnl_attr_nest_end(nlh, type);
 
 	if (mnl_socket_sendto(nl, nlh, nlh->nlmsg_len) < 0) {
 		perror("mnl_socket_send");
