@@ -32,6 +32,7 @@ static void process_dio(int sock, struct iface *iface, const void *msg,
 	struct in6_prefix pfx;
 	struct dag *dag;
 	uint16_t rank;
+	int rc;
 
 	if (len < sizeof(*dio)) {
 		flog(LOG_INFO, "dio length mismatch, drop");
@@ -95,6 +96,10 @@ static void process_dio(int sock, struct iface *iface, const void *msg,
 
 	if (rank > dag->parent->rank)
 		return;
+
+	/* Tell Linux about our choosen parent */
+	rc = nl_add_route_default(dag->iface->ifindex, &dag->parent->addr);
+	flog(LOG_INFO, "default route %d %s", rc, strerror(errno));
 
 	dag->parent->rank = rank;
 	dag->my_rank = rank + 1;
@@ -188,7 +193,6 @@ static void process_daoack(int sock, struct iface *iface, const void *msg,
 	const struct nd_rpl_daoack *daoack = msg;
 	char addr_str[INET6_ADDRSTRLEN];
 	struct dag *dag;
-	int rc;
 
 	if (len < sizeof(*daoack)) {
 		flog(LOG_INFO, "rpl daoack length mismatch, drop");
@@ -206,11 +210,7 @@ static void process_daoack(int sock, struct iface *iface, const void *msg,
 		return;
 	}
 
-	if (dag->parent) {
-		rc = nl_add_route_default(dag->iface->ifindex, &dag->parent->addr);
-		flog(LOG_INFO, "default route %d %s", rc, strerror(errno));
-	}
-
+	/* TODO implement ack handling */
 }
 
 static void process_dis(int sock, struct iface *iface, const void *msg,
