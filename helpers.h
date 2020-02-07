@@ -62,6 +62,8 @@ int gen_stateless_addr(const struct in6_prefix *prefix,
 		       const struct iface_llinfo *llinfo,
 		       struct in6_addr *dst);
 #define PROC_SYS_IP6_IFACE_FORWARDING "/proc/sys/net/ipv6/conf/%s/forwarding"
+#define PROC_SYS_IP6_IFACE_ACCEPT_SOURCE_ROUTE "/proc/sys/net/ipv6/conf/%s/accept_source_route"
+#define PROC_SYS_IP6_IFACE_RPL_SEG_ENABLED "/proc/sys/net/ipv6/conf/%s/rpl_seg_enabled"
 #define PROC_SYS_IP6_MAX_HBH_OPTS_NUM "/proc/sys/net/ipv6/max_hbh_opts_number"
 int set_interface_var(const char *iface, const char *var, const char *name,
 		      uint32_t val);
