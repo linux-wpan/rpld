@@ -171,6 +171,16 @@ struct rpl_dao_target {
     struct in6_addr rpl_dao_prefix;        /* variables number of bytes */
 } PACKED;
 
+struct rpl_dao_transit {
+    u_int8_t type;
+    u_int8_t len;
+    u_int8_t flags;
+    u_int8_t path_ctrl;
+    u_int8_t seq;
+    u_int8_t lifetime;
+    struct in6_addr parent;
+} PACKED;
+
 /* section 6.5.1, Destination Advertisement Object Acknowledgement (DAO-ACK) */
 struct nd_rpl_daoack {
     u_int8_t  rpl_instanceid;
