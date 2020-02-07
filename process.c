@@ -101,8 +101,7 @@ static void process_dio(int sock, struct iface *iface, const void *msg,
 
 	dag_process_dio(dag);
 
-	if (dag->parent)
-		send_dao(sock, &dag->parent->addr, dag);
+	send_dao(sock, &dag->parent->addr, dag);
 }
 
 static void process_dao(int sock, struct iface *iface, const void *msg,
