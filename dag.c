@@ -195,6 +195,7 @@ static int dag_init(struct dag *dag, const struct iface *iface,
 	dag->mop = mop;
 
 	dag_init_timer(dag);
+	t_init(&dag->root, &iface->ifaddr, dodagid);
 
 	return 0;
 }
@@ -252,6 +253,7 @@ struct dag *dag_create(struct iface *iface, uint8_t instanceid,
 
 void dag_free(struct dag *dag)
 {
+	t_free(&dag->root);
 	free(dag);
 }
 
@@ -363,6 +365,23 @@ static int append_target(const struct in6_prefix *prefix,
 	return 0;
 }
 
+static int append_transit(const struct in6_addr *parent,
+			   struct safe_buffer *sb)
+{
+	struct rpl_dao_transit transit = {};
+	uint8_t len;
+
+	len = sizeof(transit);
+	transit.type = RPL_DAO_TRANSITINFO;
+
+	/* TODO crazy calculation here */
+	transit.len = 20;
+	transit.parent = *parent;
+	safe_buffer_append(sb, &transit, len);
+
+	return 0;
+}
+
 void dag_build_dao(struct dag *dag, struct safe_buffer *sb)
 {
 	struct nd_rpl_daoack daoack = {};
@@ -379,12 +398,21 @@ void dag_build_dao(struct dag *dag, struct safe_buffer *sb)
 	prefix.prefix = dag->self;
 	prefix.len = 128;
 	append_target(&prefix, sb);
+	append_transit(&dag->parent->addr, sb);
 
-	list_for_each_entry(child, &dag->childs, list) {
-		prefix.prefix = child->addr;
-		prefix.len = 128;
+	switch (dag->mop) {
+	case RPL_DIO_STORING_NO_MULTICAST:
+		/* fall-through */
+	case RPL_DIO_STORING_MULTICAST:
+		list_for_each_entry(child, &dag->childs, list) {
+			prefix.prefix = child->addr;
+			prefix.len = 128;
 
-		append_target(&prefix, sb);
+			append_target(&prefix, sb);
+		}
+		break;
+	default:
+		break;
 	}
 
 	dag_daoack_insert(dag, dag->dsn);

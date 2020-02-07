@@ -36,6 +36,7 @@ srcs = files(
 	'netlink.c',
 	'dag.c',
 	'log.c',
+	'tree.c',
 )
 
 executable('rpld', srcs, include_directories : incdir, dependencies : [ evdep, luadep, mnldep ])

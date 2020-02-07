@@ -19,6 +19,7 @@
 
 #include "buffer.h"
 #include "list.h"
+#include "tree.h"
 
 struct peer {
 	struct in6_addr addr;
@@ -49,6 +50,7 @@ struct dag {
 	struct in6_addr dodagid;
 	uint8_t mop;
 
+	struct t_root root;
 	struct in6_prefix dest;
 
 	uint16_t my_rank;

@@ -106,18 +106,50 @@ static void process_dio(int sock, struct iface *iface, const void *msg,
 
 	dag_process_dio(dag);
 
-	send_dao(sock, &dag->parent->addr, dag);
+	switch (dag->mop) {
+	case RPL_DIO_STORING_NO_MULTICAST:
+		/* fall-through */
+	case RPL_DIO_STORING_MULTICAST:
+		send_dao(sock, &dag->parent->addr, dag);
+		break;
+	case RPL_DIO_NONSTORING:
+		send_dao(sock, &dag->dodagid, dag);
+	default:
+		break;
+	}
+}
+
+
+static void dag_insert_source_routes(uint32_t ifindex, const struct t_node *node)
+{
+	char addr_str[INET6_ADDRSTRLEN];
+	struct list_head path = {};
+	struct t_path *p;
+
+	t_path(node, &path);
+
+	nl_add_source_routes(ifindex, &path);
+	list_for_each_entry(p, &path, list) {
+		addrtostr(&p->addr, addr_str, sizeof(addr_str));
+		flog(LOG_INFO, "XXXXXXXXXXXXXXXXXX %s", addr_str);
+		addrtostr(&p->target, addr_str, sizeof(addr_str));
+		flog(LOG_INFO, "XXXXXXXXXXXXXXXXXX %s", addr_str);
+	}
+
+	t_path_free(&path);
 }
 
 static void process_dao(int sock, struct iface *iface, const void *msg,
 			size_t len, struct sockaddr_in6 *addr)
 {
-	const struct rpl_dao_target *target;
+	const struct rpl_dao_transit *transit = NULL;
+	const struct rpl_dao_target *target = NULL;
 	const struct nd_rpl_dao *dao = msg;
 	char addr_str[INET6_ADDRSTRLEN];
 	const struct nd_rpl_opt *opt;
 	const unsigned char *p;
 	struct child *child;
+	struct t_node *n;
 	struct dag *dag;
 	int optlen;
 	int rc;
@@ -153,6 +185,16 @@ static void process_dao(int sock, struct iface *iface, const void *msg,
 
 		flog(LOG_INFO, "dao opt %d", opt->type);
 		switch (opt->type) {
+		case RPL_DAO_TRANSITINFO:
+			transit = (const struct rpl_dao_transit *)p;
+			if (optlen < sizeof(*opt)) {
+				flog(LOG_INFO, "rpl transit length mismatch, drop");
+				return;
+			}
+
+			addrtostr(&transit->parent, addr_str, sizeof(addr_str));
+			flog(LOG_INFO, "dao transit %s", addr_str);
+			break;
 		case RPL_DAO_RPLTARGET:
 			target = (const struct rpl_dao_target *)p;
 			if (optlen < sizeof(*opt)) {
@@ -177,10 +219,25 @@ static void process_dao(int sock, struct iface *iface, const void *msg,
 		flog(LOG_INFO, "dao optlen %d", optlen);
 	}
 
-	list_for_each_entry(child, &dag->childs, list) {
-		rc = nl_add_route_via(dag->iface->ifindex, &child->addr,
-				      &child->from);
-		flog(LOG_INFO, "via route %d %s", rc, strerror(errno));
+	switch (dag->mop) {
+	case RPL_DIO_STORING_NO_MULTICAST:
+		/* fall-through */
+	case RPL_DIO_STORING_MULTICAST:
+		list_for_each_entry(child, &dag->childs, list) {
+			rc = nl_add_route_via(dag->iface->ifindex, &child->addr,
+					      &child->from);
+			flog(LOG_INFO, "via route %d %s", rc, strerror(errno));
+		}
+
+		break;
+	case RPL_DIO_NONSTORING:
+		if (transit && target) {
+			n = t_insert(&dag->root, &transit->parent,
+				     &addr->sin6_addr, &target->rpl_dao_prefix);
+			if (n)
+				dag_insert_source_routes(dag->iface->ifindex, n);
+		}
+		break;
 	}
 
 	flog(LOG_INFO, "process dao %s", addr_str);
