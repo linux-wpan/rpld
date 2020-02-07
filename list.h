@@ -39,4 +39,35 @@ struct list {
 	struct list *next;
 };
 
+static inline void list_add(struct list_head *list_head, struct list *entry)
+{
+	DL_APPEND(list_head->head, entry);
+}
+
+/* TODO Not 100% linux api may we can get rid of head arg */
+static inline void list_del(struct list_head *list_head, struct list *entry)
+{
+	DL_DELETE(list_head->head, entry);
+}
+
+static inline int list_empty(const struct list_head *list_head)
+{
+	return !list_head->head;
+}
+
+#define list_first_entry(list_head, type, member)							\
+	((!(list_head)->head)?(NULL):(container_of((list_head)->head, type, member)))
+
+#define list_next_entry(pos, member)									\
+	((!(pos)->member.next)?(NULL):(container_of((pos)->member.next, typeof(*(pos)), member)))
+
+#define list_for_each_entry(pos, list_head, member)							\
+    for ((pos) = list_first_entry(list_head, typeof(*(pos)), member); pos;				\
+	 (pos) = list_next_entry(pos, list))
+
+#define list_for_each_entry_safe(pos, n, list_head, member)						\
+    for ((pos) = list_first_entry(list_head, typeof(*(pos)), member);					\
+	 (pos) && ((n) = list_next_entry(pos, list), 1);					\
+	 (pos) = (n))
+
 #endif /* __RPLD_LIST_H__ */
