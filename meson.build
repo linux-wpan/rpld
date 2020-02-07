@@ -38,4 +38,7 @@ srcs = files(
 
 executable('rpld', srcs, dependencies : [ evdep, luadep, mnldep ])
 
+e = executable('prog', files('testprog.c', 'tree.c'))
+test('Some unit tests with asserts', e)
+
 # vim: syntax=python
