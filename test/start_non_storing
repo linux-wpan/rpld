@@ -6,10 +6,10 @@ then
 	exit
 fi
 
-./invoke_rpld 0 "lowpan0.conf" &
+./invoke_rpld 0 "lowpan0_non_storing.conf" &
 
 for i in `seq 1 5`
 do
 	sleep 1
-	./invoke_rpld $i &
+	./invoke_rpld $i "lowpan$i.conf" &
 done
