@@ -39,7 +39,7 @@ srcs = files(
 	'tree.c',
 )
 
-executable('rpld', srcs, include_directories : incdir, dependencies : [ evdep, luadep, mnldep ])
+executable('rpld', srcs, include_directories : incdir, dependencies : [ evdep, luadep, mnldep ], install: true)
 
 e = executable('prog', files('testprog.c', 'tree.c'))
 test('Some unit tests with asserts', e)
