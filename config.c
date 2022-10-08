@@ -227,7 +227,6 @@ static int config_load_dags(lua_State *L, struct iface *iface,
 			version = DEFAULT_DAG_VERSION;
 		}
 		lua_pop(L, 1);
-
 		lua_pop(L, 1);
 
 		dag = dag_create(iface, instanceid, &dodagid,
@@ -314,6 +313,15 @@ int config_load(const char *filename, struct list_head *ifaces)
 
 		strncpy(iface->ifname, lua_tostring(L, -1), IFNAMSIZ);
 		lua_pop(L, 1);
+
+		lua_getfield(L, -1, "storing_mode");
+		if (lua_isnumber(L, -1)) {
+			iface->storing_mode = lua_tonumber(L, -1);
+		} else {
+			iface->storing_mode = 0;
+		}
+		lua_pop(L, 1);
+
 #if 1
 		/* TODO check why we need that to all? */
 		rc = set_interface_var("all",

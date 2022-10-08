@@ -47,6 +47,8 @@ struct iface {
 	struct list_head rpls;
 	bool dodag_root;
 
+	uint8_t storing_mode;
+
 	struct list list;
 };
 

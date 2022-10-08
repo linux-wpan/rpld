@@ -306,7 +306,7 @@ void dag_build_dio(struct dag *dag, struct safe_buffer *sb)
 	dio.rpl_dtsn = dag->dtsn++;
 	flog(LOG_INFO, "my_rank %d", dag->my_rank);
 	dio.rpl_dagrank = htons(dag->my_rank);
-	dio.rpl_mopprf = ND_RPL_DIO_GROUNDED | RPL_DIO_STORING_NO_MULTICAST << 3;
+	dio.rpl_mopprf = ND_RPL_DIO_GROUNDED | dag->iface->storing_mode << 3;
 	dio.rpl_dagid = dag->dodagid;
 
 	safe_buffer_append(sb, &dio, sizeof(dio));
